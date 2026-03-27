@@ -4,12 +4,15 @@ const jwt = require("jsonwebtoken")
 
 exports.register = async (req, res) => {
     try {
-
         const { email, password, first_name, last_name, role } = req.body
 
         const existingUser = await User.findOne({ email })
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" })
+        }
+
+        if (role === "admin") {
+            return res.status(403).json({ message: "Cannot register as admin" })
         }
 
         const password_hash = await bcrypt.hash(password, 10)
@@ -24,7 +27,11 @@ exports.register = async (req, res) => {
 
         await user.save()
 
-        res.status(201).json(user)
+        res.status(201).json({
+            success: true,
+            message: "Registration successful",
+            user
+        })
 
     } catch (error) {
         res.status(500).json({ message: error.message })
@@ -32,12 +39,10 @@ exports.register = async (req, res) => {
 }
 
 exports.login = async (req, res) => {
-
     try {
-
         const { email, password } = req.body
 
-        const user = await User.findOne({ email })
+        const user = await User.findOne({ email }).select("+password_hash")
 
         if (!user) {
             return res.status(404).json({ message: "User not found" })
@@ -55,21 +60,27 @@ exports.login = async (req, res) => {
             { expiresIn: "7d" }
         )
 
-        res.json({ token, user })
+        user.password_hash = undefined
 
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            token,
+            user
+        })
     } catch (error) {
         res.status(500).json({ message: error.message })
     }
 }
 
 exports.getProfile = async (req, res) => {
-
     try {
-
         const user = await User.findById(req.user.id)
-
-        res.json(user)
-
+        res.status(200).json({
+            success: true,
+            message: "Profile fetched successfully",
+            user
+        })
     } catch (error) {
         res.status(500).json({ message: error.message })
     }
