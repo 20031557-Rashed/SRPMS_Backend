@@ -2,33 +2,76 @@ const LandLord = require("../models/LandLord");
 const Property = require("../models/Property")
 
 exports.createProperty = async (req, res) => {
-    const user = req.user;
-    if (req.user.role == "landlord") {
-        const landlordId = await LandLord.findOne({ user: user._id }).select("_id")
+    try {
+        let imagePaths = []
 
-        if (!landlordId) {
-            return res.status(400).json({ message: "Landlord profile not found" })
-        };
+        if (req.files && req.files.length > 0) {
+            imagePaths = req.files.map(file => file.path)
+        }
 
-        req.body.landlord = landlordId._id
+        let landlordId = null
+        if (req.user.role == "landlord") {
+            const landlord = await LandLord.findOne({ user: user._id }).select("_id")
+
+            if (!landlord) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: "Landlord profile not found" 
+                })
+            };
+
+            landlordId = landlord._id
+        }
+
+        if (req.user.role == "admin") {
+            landlordId = req.body.landlord;
+
+            if (!landlordId) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: "Landlord ID is required for admin users" 
+                })
+            }
+        }
+        const property = new Property({ ...req.body, landlord: landlordId, images: imagePaths })
+        await property.save()
+
+        res.status(201).json({
+            success: true,
+            message: "Property created successfully",
+            property
+        })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ 
+            success: false,
+            message: "Server error" 
+        })
     }
-    const property = new Property(req.body)
-    await property.save()
-
-    res.status(201).json({
-        success: true,
-        message: "Property created successfully",
-        property
-    })
 }
 
 exports.getProperties = async (req, res) => {
-    const properties = await Property.find().populate("landlord")
-    res.json({
-        success: true,
-        message: "Properties fetched successfully",
-        properties
-    })
+    try {
+        let properties
+
+        if (req.user && req.user.role === "landlord") {
+            properties = await Property.find({ landlord: req.user._id })
+        } else {
+            properties = await Property.find().populate("landlord")
+        }
+
+        res.json({
+            success: true,
+            message: "Properties fetched successfully",
+            properties
+        })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ 
+            success: false,
+            message: "Server error" 
+        })
+    }
 }
 
 exports.getPropertyById = async (req, res) => {

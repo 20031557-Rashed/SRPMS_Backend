@@ -26,12 +26,16 @@ app.get("/", (req, res) => {
     })
 })
 
+app.use("/uploads", express.static("uploads"))
+
 /* ------------------------------
    Routes (we will add later)
 --------------------------------*/
 app.use("/api/auth", require("./src/routes/authRoutes"))
 app.use("/api/properties", require("./src/routes/propertyRoutes"))
 app.use("/api/leases", require("./src/routes/leaseRoutes"))
+app.use("/api/users", require("./src/routes/userRoutes"))
+// app.use("/api/tenants", require("./src/routes/tenantRoutes"))
 
 /* ------------------------------
    Server Start

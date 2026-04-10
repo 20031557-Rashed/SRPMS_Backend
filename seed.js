@@ -32,12 +32,16 @@ const seedData = async () => {
             {
                 email: "landlord@test.com",
                 password_hash: hashedPassword,
-                role: "landlord"
+                role: "landlord",
+                first_name: "Landlord",
+                last_name: "User"
             },
             {
                 email: "tenant@test.com",
                 password_hash: hashedPassword,
-                role: "tenant"
+                role: "tenant",
+                first_name: "Tenant",
+                last_name: "User"
             }
         ])
 

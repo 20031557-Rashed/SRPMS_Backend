@@ -10,6 +10,16 @@ exports.getUserById = async (req, res) => {
     res.json(user)
 }
 
+exports.createUser = async (req, res) => {
+    const user = new User(req.body)
+    await user.save()
+    res.status(201).json({
+        success: true,
+        message: "User created successfully",
+        user
+    })
+}
+
 exports.updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true })
     res.json(user)
